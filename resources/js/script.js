@@ -1,30 +1,35 @@
 //credit: https://medium.com/@anMagpie/simple-snake-game-in-html-and-javascript-ed78cffac36
 
+//game variables
 let canvas;
 let ctx;
 let x;
 let gameEnded = false;
-let changingDirection = false;
+let changingDirection;
 
+//reset button
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener('click', () => {
+  snakeTrail = [];
+  snakeX = (snakeY = 10);
   init();
   resetButton.setAttribute('disabled', true);
 })
 
+//game initializer
 init = () => {
   console.log('game initialized')
-  canvas = document.getElementById("gameCanvas");
-  ctx = canvas.getContext("2d");
-  tailSize = defaultTailSize;
   x = 8;
   setInterval(draw, 1000 / x);
   changingDirection = false;
+  gameEnded = false;
 }
 
 document.addEventListener("keydown", changeDirection);
 
 window.onload = function() {
+  canvas = document.getElementById("gameCanvas");
+  ctx = canvas.getContext("2d");
   init();
 }
 
@@ -46,10 +51,49 @@ let appleX = (appleY = 15);
 
 //draw
 const draw = () => {
-  //move snake to next position
-  snakeX += nextX;
-  snakeY += nextY;
+  changingDirection = false;
+  //paint background
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // paint snake
+  ctx.fillStyle = "white";
+  for (var i = 0; i < snakeTrail.length; i++) {
+    ctx.fillRect(
+      snakeTrail[i].x * tileSize,
+      snakeTrail[i].y * tileSize,
+      tileSize,
+      tileSize
+    );
+  }
+  
+  // paint apple
+  ctx.filStyle = "red";
+  ctx.fillRect(appleX * tileSize, appleY * tileSize, tileSize, tileSize);
+
+  //snake bite apple?
+  if (snakeX == appleX && snakeY == appleY) {
+    tailSize++;
+    appleX = Math.floor(Math.random() * gridSize);
+    appleY = Math.floor(Math.random() * gridSize);
+  }
+
+  //set snake trail
+  snakeTrail.push({ x: snakeX, y: snakeY });
+  while (snakeTrail.length > tailSize) {
+    snakeTrail.shift();
+  }
+
+  //move snake to next position
+  if (!gameEnded){
+    snakeX += nextX;
+    snakeY += nextY;
+  }
+  gameOver();
+  didGameEnd();
+}
+
+const gameOver = () => {
   // snake over game world?
   if (snakeX < 0) {
     gameEnded = true;
@@ -67,58 +111,19 @@ const draw = () => {
     gameEnded = true;
     console.log('snakeY is greater than 20')
   }
-
-  //snake bite apple?
-  if (snakeX == appleX && snakeY == appleY) {
-    tailSize++;
-    appleX = Math.floor(Math.random() * gridSize);
-    appleY = Math.floor(Math.random() * gridSize);
-  }
-
-  //paint background
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // paint snake
-  ctx.fillStyle = "green";
-  for (var i = 0; i < snakeTrail.length; i++) {
-    ctx.fillRect(
-      snakeTrail[i].x * tileSize,
-      snakeTrail[i].y * tileSize,
-      tileSize,
-      tileSize
-    );
-    
-    //console.log(snakeTrail[i].x == snakeX);
-    //console.log(snakeTrail[i].y == snakeY);
-  
-    /*snake bites it's tail?
-    if (snakeTrail[i].x == snakeX && snakeTrail[i].y == snakeY) {
-      gameEnded = true;
-      console.log('snake bit its tail')
-    }
-    endGame();*/
-  }
-
-  // paint apple
-  ctx.filStyle = "red";
-  ctx.fillRect(appleX * tileSize, appleY * tileSize, tileSize, tileSize);
-
-  //set snake trail
-  snakeTrail.push({ x: snakeX, y: snakeY });
-  while (snakeTrail.length > tailSize) {
-    snakeTrail.shift();
-  }
 }
 
-//end game 
-const endGame = () => {
+
+//check end game 
+const didGameEnd = () => {
   if (gameEnded) {
-    clearInterval(draw);
+    console.log('game ended');
+    //clearInterval(draw);
+    //x = 0;
     document.removeEventListener("keydown", changeDirection);
     tailSize = defaultTailSize;
     resetButton.removeAttribute('disabled');
-    console.log('game ended')}
+  }
 }
 
 // input
@@ -131,7 +136,7 @@ function changeDirection(event) {
   if (changingDirection) return;
   changingDirection = true;
 
-  const keyPressed = event.keyCode;
+  let keyPressed = event.keyCode;
   console.log(keyPressed)
 
   const goingUp = nextY === -1;
@@ -155,4 +160,4 @@ function changeDirection(event) {
     nextX = 0;
     nextY = 1;
   }
-}
+};
